@@ -1,38 +1,107 @@
 import 'dart:async';
-
 import 'package:flame/camera.dart';
+import 'package:flame/events.dart';
+import 'package:flame/experimental.dart';
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
 import 'package:flame/components.dart';
+import 'package:flutter/services.dart';
+import 'package:together/Components/backgroud.dart';
+import 'package:together/Components/temp_player.dart';
 import 'package:together/Components/wall.dart';
+import 'package:together/world.dart';
 
-class MainScreen extends FlameGame {
-  static const double gameWidth = 800; // Set your desired game width
-  static const double gameHeight = 600; // Set your desired game height
+class MainScreen extends FlameGame
+    with TapDetector, PanDetector, KeyboardEvents {
+  static const double gameWidth = 2360;
+  static const double gameHeight = 1640;
+  late final TempPlayer player;
+  late final TempPlayer secondPlayer;
+  late final Backgroud background;
 
-  MainScreen()
-      : super(
-          camera: CameraComponent.withFixedResolution(
-            width: gameWidth,
-            height: gameHeight,
-          ),
-        );
-
-  double get width => size.x;
   @override
   Future<void> onLoad() async {
     super.onLoad();
-    // Load game assets or set up components here
-    // Add a wall that starts far away and "moves" toward the player
-    add(Wall(
-      initialSize: 3000, // Try a larger size to ensure it's visible
-      distanceFromPlayer: 10,
-      speed: 0.1,
-      startPosition: Vector2(200, 300), // Center the starting position more
-      targetPosition: Vector2(400, 300), // Move towards the center
-    ));
+
+    background = Backgroud();
+    world.add(background);
+    print(background.position.y);
+
+    player = TempPlayer(
+      position: Vector2(300, 400),
+      size: Vector2(100, 100), // player size
+      characterType: CharacterType.pink,
+    );
+
+    world.add(player); // add the player to the game world
+
+    secondPlayer = TempPlayer(
+      position: Vector2(900, 400),
+      size: Vector2(100, 100), // Define player size
+      characterType: CharacterType.white,
+    );
+
+    world.add(secondPlayer);
+    camera.follow(player); // Follow the player
+    camera.setBounds(Rectangle.fromLTRB(0, 0, 5000, 6000));
   }
 
-  double get screenWidth => size.x;
-  double get screenHeight => size.y;
+  @override
+  void onTapDown(TapDownInfo info) {
+    // Convert the global tap position to world position
+    Vector2 localPosition = camera.globalToLocal(info.eventPosition.global);
+
+    // Check if the tap is on the second player
+    if (secondPlayer.onCharacter(localPosition)) {
+      print("Magic activated");
+      secondPlayer.startMoving(); // Start moving when tapped
+    }
+  }
+
+  @override
+  void onPanUpdate(DragUpdateInfo info) {
+    // Move the player based on pan updates
+    if (secondPlayer.isMoving) {
+      secondPlayer.position
+          .add(info.delta.global); // Update position based on drag
+    }
+  }
+
+  @override
+  void onTapUp(TapUpInfo info) {
+    // Stop moving when the touch ends
+    secondPlayer.stopMoving();
+  }
+
+  @override
+  KeyEventResult onKeyEvent(
+    // ignore: deprecated_member_use
+    RawKeyEvent event,
+    Set<LogicalKeyboardKey> keysPressed,
+  ) {
+    final isKeyDown = event is RawKeyDownEvent;
+    bool ignore = true;
+    if (isKeyDown) {
+      if (keysPressed.contains(LogicalKeyboardKey.arrowLeft) &&
+          keysPressed.contains(LogicalKeyboardKey.arrowRight)) {
+        ignore = false;
+      }
+      // Check for right arrow key
+      else if (keysPressed.contains(LogicalKeyboardKey.arrowLeft)) {
+        player.moveLeft(); // Move player left
+        ignore = false;
+      }
+      // Check for right arrow key
+      else if (keysPressed.contains(LogicalKeyboardKey.arrowRight)) {
+        player.moveRight(); // Move player right
+        ignore = false;
+      }
+      // Check for spacebar for jump
+      else if (keysPressed.contains(LogicalKeyboardKey.space)) {
+        player.jump(); // Make the player jump
+        ignore = false;
+      }
+    }
+    return ignore ? KeyEventResult.ignored : KeyEventResult.handled;
+  }
 }

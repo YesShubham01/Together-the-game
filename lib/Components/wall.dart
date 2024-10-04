@@ -1,4 +1,7 @@
+import 'dart:ui';
+
 import 'package:flame/components.dart';
+import 'package:flame/palette.dart';
 
 class Wall extends SpriteComponent {
   // Initial properties for wall
@@ -18,9 +21,9 @@ class Wall extends SpriteComponent {
   @override
   Future<void> onLoad() async {
     // Load your sprite asset here
-    print("wall loading started");
+    // print("wall loading started");
     sprite = await Sprite.load(
-        'wall.jpeg'); // Ensure the correct path to the image asset
+        'wall.png'); // Ensure the correct path to the image asset
     size = Vector2.all(initialSize); // Set the initial size for the sprite
     return super.onLoad();
   }
@@ -28,7 +31,7 @@ class Wall extends SpriteComponent {
   @override
   void update(double dt) {
     super.update(dt);
-    print("wall updated");
+    // print("wall updated");
 
     // Simulate depth by scaling the wall as it "moves" closer
     distanceFromPlayer -= speed * dt;

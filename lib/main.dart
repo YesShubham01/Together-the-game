@@ -1,9 +1,16 @@
 import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
 import 'package:together/Pages/Splash%20Page/splash_page.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'Provider/auth_credential_provider.dart';
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   Flame.device.fullScreen();
   Flame.device.setLandscape();
   runApp(const Application());
@@ -19,12 +26,17 @@ class Application extends StatefulWidget {
 class _ApplicationState extends State<Application> {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Together : The Game',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: ((context) => AuthCredentialProvider())),
+      ],
+      child: MaterialApp(
+        title: 'Together : The Game',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        home: const SplashPage(),
       ),
-      home: const SplashPage(),
     );
   }
 }

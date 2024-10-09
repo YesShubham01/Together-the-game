@@ -16,7 +16,7 @@ enum MovementDirection {
 class TempPlayer extends SpriteAnimationComponent with HasGameRef<MainScreen> {
   // Define the speed for movement and jump height
   final double speed = 30;
-  final double jumpHeight = 50;
+  final double jumpHeight = 100;
   final double gravity = 250;
   final double groundY = 400;
   double velocityY = 0;
@@ -25,9 +25,13 @@ class TempPlayer extends SpriteAnimationComponent with HasGameRef<MainScreen> {
   bool isMoving = false;
   bool isJumping = false;
   bool isFalling = false;
+  bool isFloating = false;
 
   final CharacterType characterType;
   MovementDirection movementDirection = MovementDirection.neutral;
+
+  String newSpritePath = "";
+  String oldSpritePath = "";
 
   TempPlayer({
     required Vector2 position,
@@ -38,9 +42,10 @@ class TempPlayer extends SpriteAnimationComponent with HasGameRef<MainScreen> {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-
+    newSpritePath = _getSpritePath();
+    oldSpritePath = _getSpritePath();
     animation = await game.loadSpriteAnimation(
-      _getSpritePath(),
+      newSpritePath,
       SpriteAnimationData.sequenced(
         amount: 4,
         stepTime: .2,
@@ -55,26 +60,46 @@ class TempPlayer extends SpriteAnimationComponent with HasGameRef<MainScreen> {
   @override
   void update(double dt) {
     super.update(dt);
+    // print(horizontalVelocity);
 
-    // Apply gravity continuously if the player is in the air
-    if (position.y < groundY || isJumping) {
-      velocityY += gravity * dt; // Gravity adds to vertical velocity
-      position.y += velocityY * dt; // Apply vertical velocity to position
+    if (horizontalVelocity != 0) {
+      isMoving = true;
+    } else {
+      isMoving = false;
     }
 
-    // Apply horizontal movement during jumping
-    if (isJumping) {
-      position.x +=
-          horizontalVelocity * dt; // Move horizontally during the jump
+    newSpritePath = _getSpritePath();
+    if (newSpritePath != oldSpritePath) {
+      setAnimationToIdle();
+      oldSpritePath = newSpritePath;
+    }
+
+    // Apply horizontal movement based on horizontalVelocity
+    position.add(Vector2(horizontalVelocity * dt, 0));
+    // position.x += horizontalVelocity * dt;
+
+    // Apply gravity continuously if the player is in the air
+    if (position.y < groundY) {
+      velocityY += gravity * dt;
+      position.add(Vector2(0, velocityY * dt));
+      // position.y += velocityY * dt;
     }
 
     // Prevent the player from falling below the ground
     if (position.y >= groundY) {
       position.y = groundY; // Snap to the ground
       velocityY = 0; // Reset vertical velocity when on the ground
-      isJumping = false; // Stop the jumping state
-      horizontalVelocity = 0; // Stop horizontal movement after landing
+      isJumping = false;
+      // horizontalVelocity = 0; // Stop horizontal movement after landing
     }
+  }
+
+  void startFloating() {
+    isFloating = true; // Set the moving state to true
+  }
+
+  void stopFloating() {
+    isFloating = false; // Set the moving state to true
   }
 
   void startMoving() {
@@ -87,9 +112,16 @@ class TempPlayer extends SpriteAnimationComponent with HasGameRef<MainScreen> {
 
   // Function to move the player left
   void moveLeft() {
-    if (!isJumping && position.x > 0) {
-      position.add(Vector2(-speed, 0)); // Move left
+    if (position.x > 0) {
+      isMoving = true;
+      horizontalVelocity -= speed;
       movementDirection = MovementDirection.left; // Track movement direction
+
+      Future.delayed(const Duration(seconds: 1), () {
+        if (horizontalVelocity < 0) {
+          horizontalVelocity += speed;
+        }
+      });
     }
   }
 
@@ -99,9 +131,15 @@ class TempPlayer extends SpriteAnimationComponent with HasGameRef<MainScreen> {
         position.x + speed; // Calculate the new position
 
     // Ensure the new position does not exceed the right boundary
-    if (!isJumping && newPositionX + size.x <= game.background.size.x) {
-      position.add(Vector2(speed, 0)); // Move right
+    if (newPositionX + size.x <= game.background.size.x) {
+      horizontalVelocity += speed;
       movementDirection = MovementDirection.right; // Track movement direction
+
+      Future.delayed(const Duration(seconds: 1), () {
+        if (horizontalVelocity > 0) {
+          horizontalVelocity -= speed;
+        }
+      });
     }
   }
 
@@ -115,21 +153,14 @@ class TempPlayer extends SpriteAnimationComponent with HasGameRef<MainScreen> {
       // Set horizontal velocity based on the movement direction
       switch (movementDirection) {
         case MovementDirection.left:
-          horizontalVelocity = -speed;
+          horizontalVelocity -= speed;
           break;
         case MovementDirection.right:
-          horizontalVelocity = speed;
+          horizontalVelocity += speed;
           break;
         default:
-          horizontalVelocity = 0;
+        // horizontalVelocity = 0;
       }
-
-      // Reset jumping state after reaching the peak
-      Future.delayed(const Duration(milliseconds: 200), () {
-        isJumping = false;
-        movementDirection =
-            MovementDirection.neutral; // Reset direction after jump
-      });
     }
   }
 
@@ -144,11 +175,31 @@ class TempPlayer extends SpriteAnimationComponent with HasGameRef<MainScreen> {
   String _getSpritePath() {
     switch (characterType) {
       case CharacterType.pink:
-        return 'pink_character_idle.png';
+        if (movementDirection == MovementDirection.right) {
+          return isMoving
+              ? "pink_character_walk_right.png"
+              : 'pink_character_idle.png';
+        } else {
+          return isMoving
+              ? "pink_character_run_left.png"
+              : 'pink_character_idle _left.png';
+        }
       case CharacterType.white:
         return 'white_character_idle.png';
       default:
         return 'pink_character_idle.png'; // Fallback to pink
     }
+  }
+
+  void setAnimationToIdle() async {
+    animation = await game.loadSpriteAnimation(
+      _getSpritePath(),
+      SpriteAnimationData.sequenced(
+        amount: 4,
+        stepTime: .2,
+        textureSize: Vector2.all(32),
+        loop: true,
+      ),
+    );
   }
 }

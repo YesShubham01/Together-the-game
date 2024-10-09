@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "6989757704",
+    "project_id": "together-the-game",
+    "storage_bucket": "together-the-game.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:6989757704:android:e45743b46e19fad09f00bd",
+        "android_client_info": {
+          "package_name": "com.example.together"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyApVdBpEryHMm9H-QdKCI7FPU4Mag-WOiE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -57,10 +57,14 @@ class TempPlayer extends SpriteAnimationComponent with HasGameRef<MainScreen> {
     position.y = groundY;
   }
 
+  int i = 0;
   @override
   void update(double dt) {
     super.update(dt);
-    // print(horizontalVelocity);
+    if (isFloating) {
+      print("$isFloating $i");
+      i++;
+    }
 
     if (horizontalVelocity != 0) {
       isMoving = true;
@@ -86,6 +90,7 @@ class TempPlayer extends SpriteAnimationComponent with HasGameRef<MainScreen> {
     }
 
     // Prevent the player from falling below the ground
+
     if (position.y >= groundY) {
       position.y = groundY; // Snap to the ground
       velocityY = 0; // Reset vertical velocity when on the ground
@@ -176,22 +181,31 @@ class TempPlayer extends SpriteAnimationComponent with HasGameRef<MainScreen> {
     switch (characterType) {
       case CharacterType.pink:
         if (movementDirection == MovementDirection.right) {
-          return isMoving
-              ? "pink_character_walk_right.png"
-              : 'pink_character_idle.png';
+          if (isFloating) {
+            return "pink_character_float.png";
+          } else if (isMoving) {
+            return "pink_character_walk_right.png";
+          } else {
+            return 'pink_character_idle.png';
+          }
         } else {
           return isMoving
               ? "pink_character_run_left.png"
               : 'pink_character_idle _left.png';
         }
       case CharacterType.white:
-        return 'white_character_idle.png';
+        if (isFloating) {
+          return "white_character_float.png";
+        } else {
+          return 'white_character_idle.png';
+        }
       default:
         return 'pink_character_idle.png'; // Fallback to pink
     }
   }
 
   void setAnimationToIdle() async {
+    print(_getSpritePath());
     animation = await game.loadSpriteAnimation(
       _getSpritePath(),
       SpriteAnimationData.sequenced(

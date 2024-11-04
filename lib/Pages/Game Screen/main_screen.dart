@@ -67,9 +67,17 @@ class MainScreen extends FlameGame
   }
 
   @override
+  void onPanEnd(DragEndInfo info) {
+    super.onPanEnd(info);
+    secondPlayer.stopMoving();
+    secondPlayer.stopFloating();
+  }
+
+  @override
   void onTapUp(TapUpInfo info) {
     // Stop moving when the touch ends
     secondPlayer.stopMoving();
+    secondPlayer.stopFloating();
   }
 
   @override
